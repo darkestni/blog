@@ -1,0 +1,340 @@
+
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>我的博客</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: #f5f5f5;
+        }
+
+        /* 头部 */
+        header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 3rem 0;
+            text-align: center;
+        }
+
+        header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+        header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+
+        /* 导航 */
+        nav {
+            background: #333;
+            padding: 1rem;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        nav ul {
+            list-style: none;
+            display: flex;
+            justify-content: center;
+            gap: 2rem;
+        }
+
+        nav a {
+            color: white;
+            text-decoration: none;
+            transition: color 0.3s;
+        }
+
+        nav a:hover {
+            color: #667eea;
+        }
+
+        /* 主容器 */
+        .container {
+            max-width: 1200px;
+            margin: 2rem auto;
+            padding: 0 1rem;
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 2rem;
+        }
+
+        /* 文章列表 */
+        .posts {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+
+        .post-card {
+            background: white;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+
+        .post-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 5px 20px rgba(0,0,0,0.15);
+        }
+
+        .post-image {
+            width: 100%;
+            height: 200px;
+            object-fit: cover;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+
+        .post-content {
+            padding: 1.5rem;
+        }
+
+        .post-date {
+            color: #888;
+            font-size: 0.9rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .post-title {
+            font-size: 1.5rem;
+            margin-bottom: 0.5rem;
+            color: #333;
+        }
+
+        .post-excerpt {
+            color: #666;
+            line-height: 1.8;
+        }
+
+        .read-more {
+            display: inline-block;
+            margin-top: 1rem;
+            color: #667eea;
+            text-decoration: none;
+            font-weight: 500;
+        }
+
+        .read-more:hover {
+            text-decoration: underline;
+        }
+
+        /* 侧边栏 */
+        .sidebar {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+
+        .widget {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .widget h3 {
+            margin-bottom: 1rem;
+            color: #333;
+            border-bottom: 2px solid #667eea;
+            padding-bottom: 0.5rem;
+        }
+
+        .widget ul {
+            list-style: none;
+        }
+
+        .widget li {
+            padding: 0.5rem 0;
+            border-bottom: 1px solid #eee;
+        }
+
+        .widget li:last-child {
+            border-bottom: none;
+        }
+
+        .widget a {
+            color: #666;
+            text-decoration: none;
+            transition: color 0.3s;
+        }
+
+        .widget a:hover {
+            color: #667eea;
+        }
+
+        .about-text {
+            color: #666;
+            line-height: 1.8;
+        }
+
+        /* 页脚 */
+        footer {
+            background: #333;
+            color: white;
+            text-align: center;
+            padding: 2rem;
+            margin-top: 3rem;
+        }
+
+        /* 响应式 */
+        @media (max-width: 768px) {
+            .container {
+                grid-template-columns: 1fr;
+            }
+
+            header h1 {
+                font-size: 2rem;
+            }
+
+            nav ul {
+                gap: 1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- 头部 -->
+    <header>
+        <h1>我的博客</h1>
+        <p>记录学习与生活</p>
+    </header>
+
+    <!-- 导航 -->
+    <nav>
+        <ul>
+            <li><a href="#">首页</a></li>
+            <li><a href="#">文章</a></li>
+            <li><a href="#">关于</a></li>
+            <li><a href="#">联系</a></li>
+        </ul>
+    </nav>
+
+    <!-- 主容器 -->
+    <div class="container">
+        <!-- 文章列表 -->
+        <main class="posts">
+            <article class="post-card">
+                <div class="post-image"></div>
+                <div class="post-content">
+                    <div class="post-date">2026 年 2 月 28 日</div>
+                    <h2 class="post-title">理解僵尸进程 - OS 实验心得</h2>
+                    <p class="post-excerpt">通过 fork() 系统调用创建子进程后，如果子进程先退出而父进程没有及时调用 wait() 回收，子进程就会变成僵尸进程。这篇文章详细记录了僵尸进程的观察实验和解决方法。</p>
+                    <a href="article.html" class="read-more">阅读全文 →</a>
+                </div>
+            </article>
+
+            <article class="post-card">
+                <div class="post-image" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);"></div>
+                <div class="post-content">
+                    <div class="post-date">2026 年 2 月 27 日</div>
+                    <h2 class="post-title">进程状态转换图详解</h2>
+                    <p class="post-excerpt">进程有运行、就绪、阻塞三种基本状态。本文结合课件深入讲解了进程之间的状态转换，以及 PCB 进程控制块的作用。</p>
+                    <a href="#" class="read-more">阅读全文 →</a>
+                </div>
+            </article>
+
+            <article class="post-card">
+                <div class="post-image" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);"></div>
+                <div class="post-content">
+                    <div class="post-date">2026 年 2 月 26 日</div>
+                    <h2 class="post-title">CPU 调度算法对比</h2>
+                    <p class="post-excerpt">FCFS、SJF、轮转调度、优先级调度... 这些 CPU 调度算法各有什么优缺点？本文将通过实例对比分析不同调度算法的性能指标。</p>
+                    <a href="#" class="read-more">阅读全文 →</a>
+                </div>
+            </article>
+
+            <article class="post-card">
+                <div class="post-image" style="background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%);"></div>
+                <div class="post-content">
+                    <div class="post-date">2026 年 2 月 25 日</div>
+                    <h2 class="post-title">页面置换算法学习笔记</h2>
+                    <p class="post-excerpt">OPT、FIFO、LRU、Clock 算法，哪种页面置换算法最有效？本文总结了 demand paging 中的各种页面置换策略及其实现原理。</p>
+                    <a href="#" class="read-more">阅读全文 →</a>
+                </div>
+            </article>
+
+            <article class="post-card">
+                <div class="post-image" style="background: linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%);"></div>
+                <div class="post-content">
+                    <div class="post-date">2026 年 2 月 24 日</div>
+                    <h2 class="post-title">死锁的产生与预防</h2>
+                    <p class="post-excerpt">互斥、占有并等待、不可抢占、循环等待，这是死锁产生的四个必要条件。如何破坏这些条件来预防死锁？一起来学习。</p>
+                    <a href="#" class="read-more">阅读全文 →</a>
+                </div>
+            </article>
+
+            <article class="post-card">
+                <div class="post-image" style="background: linear-gradient(135deg, #e0c3fc 0%, #8ec5fc 100%);"></div>
+                <div class="post-content">
+                    <div class="post-date">2026 年 2 月 23 日</div>
+                    <h2 class="post-title">虚拟内存与地址转换</h2>
+                    <p class="post-excerpt">逻辑地址如何转换为物理地址？页表的作用是什么？TLB 如何加速地址转换？本文带你理解虚拟内存的核心机制。</p>
+                    <a href="#" class="read-more">阅读全文 →</a>
+                </div>
+            </article>
+        </main>
+
+        <!-- 侧边栏 -->
+        <aside class="sidebar">
+            <div class="widget">
+                <h3>关于我</h3>
+                <p class="about-text">热爱编程，喜欢探索技术的奥秘。这里是我记录和分享的地方。</p>
+            </div>
+
+            <div class="widget">
+                <h3>分类</h3>
+                <ul>
+                    <li><a href="#">进程管理 (5)</a></li>
+                    <li><a href="#">CPU 调度 (3)</a></li>
+                    <li><a href="#">内存管理 (4)</a></li>
+                    <li><a href="#">文件系统 (2)</a></li>
+                    <li><a href="#">死锁 (1)</a></li>
+                </ul>
+            </div>
+
+            <div class="widget">
+                <h3>标签</h3>
+                <div style="display: flex; flex-wrap: wrap; gap: 0.5rem;">
+                    <a href="#" style="background: #f0f0f0; padding: 0.3rem 0.6rem; border-radius: 15px; font-size: 0.85rem;">进程</a>
+                    <a href="#" style="background: #f0f0f0; padding: 0.3rem 0.6rem; border-radius: 15px; font-size: 0.85rem;">fork</a>
+                    <a href="#" style="background: #f0f0f0; padding: 0.3rem 0.6rem; border-radius: 15px; font-size: 0.85rem;">僵尸进程</a>
+                    <a href="#" style="background: #f0f0f0; padding: 0.3rem 0.6rem; border-radius: 15px; font-size: 0.85rem;">CPU 调度</a>
+                    <a href="#" style="background: #f0f0f0; padding: 0.3rem 0.6rem; border-radius: 15px; font-size: 0.85rem;">虚拟内存</a>
+                    <a href="#" style="background: #f0f0f0; padding: 0.3rem 0.6rem; border-radius: 15px; font-size: 0.85rem;">页表</a>
+                    <a href="#" style="background: #f0f0f0; padding: 0.3rem 0.6rem; border-radius: 15px; font-size: 0.85rem;">死锁</a>
+                    <a href="#" style="background: #f0f0f0; padding: 0.3rem 0.6rem; border-radius: 15px; font-size: 0.85rem;">Linux</a>
+                </div>
+            </div>
+
+            <div class="widget">
+                <h3>友情链接</h3>
+                <ul>
+                    <li><a href="#">GitHub</a></li>
+                    <li><a href="#">知乎</a></li>
+                    <li><a href="#">掘金</a></li>
+                </ul>
+            </div>
+        </aside>
+    </div>
+
+    <!-- 页脚 -->
+    <footer>
+        <p>&copy; 2026 我的博客。All rights reserved.</p>
+    </footer>
+</body>
+</html>

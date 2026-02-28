@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>理解僵尸进程 - OS 实验心得 - 我的博客</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            line-height: 1.8;
+            color: #333;
+            background: #f5f5f5;
+        }
+
+        /* 代码高亮 */
+        pre {
+            background: #282c34;
+            color: #abb2bf;
+            padding: 1.5rem;
+            border-radius: 8px;
+            overflow-x: auto;
+            margin: 1.5rem 0;
+            font-family: "Fira Code", "Consolas", monospace;
+            font-size: 0.9rem;
+        }
+
+        code {
+            font-family: "Fira Code", "Consolas", monospace;
+        }
+
+        .keyword { color: #c678dd; }
+        .type { color: #e5c07b; }
+        .string { color: #98c379; }
+        .function { color: #61afef; }
+        .comment { color: #5c6370; font-style: italic; }
+        .number { color: #d19a66; }
+
+        /* 头部 */
+        header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 2rem 0;
+            text-align: center;
+        }
+
+        header h1 {
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+        }
+
+        header a {
+            color: white;
+            text-decoration: none;
+        }
+
+        /* 导航 */
+        nav {
+            background: #333;
+            padding: 1rem;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        nav ul {
+            list-style: none;
+            display: flex;
+            justify-content: center;
+            gap: 2rem;
+        }
+
+        nav a {
+            color: white;
+            text-decoration: none;
+            transition: color 0.3s;
+        }
+
+        nav a:hover {
+            color: #667eea;
+        }
+
+        /* 主容器 */
+        .container {
+            max-width: 900px;
+            margin: 2rem auto;
+            padding: 0 1rem;
+        }
+
+        /* 文章 */
+        article {
+            background: white;
+            border-radius: 8px;
+            padding: 3rem;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .post-meta {
+            color: #888;
+            font-size: 0.95rem;
+            margin-bottom: 1rem;
+        }
+
+        .post-title {
+            font-size: 2rem;
+            margin-bottom: 1.5rem;
+            color: #333;
+            line-height: 1.3;
+        }
+
+        .post-content {
+            font-size: 1.05rem;
+        }
+
+        .post-content h2 {
+            font-size: 1.5rem;
+            margin: 2rem 0 1rem;
+            color: #333;
+            border-left: 4px solid #667eea;
+            padding-left: 1rem;
+        }
+
+        .post-content h3 {
+            font-size: 1.2rem;
+            margin: 1.5rem 0 0.8rem;
+            color: #555;
+        }
+
+        .post-content p {
+            margin: 1rem 0;
+            text-align: justify;
+        }
+
+        .post-content ul, .post-content ol {
+            margin: 1rem 0;
+            padding-left: 2rem;
+        }
+
+        .post-content li {
+            margin: 0.5rem 0;
+        }
+
+        .info-box {
+            background: #f0f4ff;
+            border-left: 4px solid #667eea;
+            padding: 1rem 1.5rem;
+            margin: 1.5rem 0;
+            border-radius: 0 8px 8px 0;
+        }
+
+        .warning-box {
+            background: #fff8e6;
+            border-left: 4px solid #f5a623;
+            padding: 1rem 1.5rem;
+            margin: 1.5rem 0;
+            border-radius: 0 8px 8px 0;
+        }
+
+        /* 返回按钮 */
+        .back-link {
+            display: inline-block;
+            margin-bottom: 1.5rem;
+            color: #667eea;
+            text-decoration: none;
+            font-weight: 500;
+        }
+
+        .back-link:hover {
+            text-decoration: underline;
+        }
+
+        /* 页脚 */
+        footer {
+            background: #333;
+            color: white;
+            text-align: center;
+            padding: 2rem;
+            margin-top: 3rem;
+        }
+
+        /* 响应式 */
+        @media (max-width: 768px) {
+            article {
+                padding: 1.5rem;
+            }
+
+            .post-title {
+                font-size: 1.5rem;
+            }
+
+            nav ul {
+                gap: 1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- 头部 -->
+    <header>
+        <h1><a href="blog.html">我的博客</a></h1>
+        <p>记录学习与生活</p>
+    </header>
+
+    <!-- 导航 -->
+    <nav>
+        <ul>
+            <li><a href="blog.html">首页</a></li>
+            <li><a href="#">文章</a></li>
+            <li><a href="#">关于</a></li>
+            <li><a href="#">联系</a></li>
+        </ul>
+    </nav>
+
+    <!-- 主容器 -->
+    <div class="container">
+        <a href="blog.html" class="back-link">← 返回首页</a>
+
+        <article>
+            <div class="post-meta">2026 年 2 月 28 日 · 操作系统 · 进程管理</div>
+            <h1 class="post-title">理解僵尸进程 - OS 实验心得</h1>
+
+            <div class="post-content">
+                <p>在操作系统的学习过程中，进程管理是一个核心概念。最近通过实验，我深入理解了僵尸进程（Zombie Process）的产生原因和解决方法。在这篇文章中，我将分享我的学习心得和实验过程。</p>
+
+                <div class="info-box">
+                    <strong>僵尸进程</strong>：当子进程先于父进程退出，但父进程没有调用 <code>wait()</code> 或 <code>waitpid()</code> 来读取子进程的退出状态时，子进程就会变成僵尸进程。
+                </div>
+
+                <h2>一、什么是僵尸进程？</h2>
+                <p>僵尸进程是已经终止但其进程描述符（PCB）仍然保留在系统中的进程。它处于 <code>Z</code> 状态（Zombie/Defunct），不再占用 CPU 或内存资源，但仍然占用一个进程 ID 和进程表中的条目。</p>
+
+                <p>进程的生命周期包括以下几个状态：</p>
+                <ul>
+                    <li><strong>运行态（Running）</strong>：进程正在 CPU 上执行</li>
+                    <li><strong>就绪态（Ready）</strong>：进程准备好执行，等待 CPU 调度</li>
+                    <li><strong>阻塞态（Blocked）</strong>：进程等待某个事件（如 I/O 完成）</li>
+                    <li><strong>僵尸态（Zombie）</strong>：进程已退出，等待父进程回收</li>
+                    <li><strong>终止态（Terminated）</strong>：进程资源已完全释放</li>
+                </ul>
+
+                <h2>二、实验代码</h2>
+                <p>下面是一个演示僵尸进程的 C 语言程序。这个程序创建了一个子进程，子进程立即退出，而父进程会暂停等待用户输入，这样就给我们时间去观察僵尸进程。</p>
+
+                <pre><code><span class="keyword">#include</span> <span class="string">&lt;stdio.h&gt;</span>
+<span class="keyword">#include</span> <span class="string">&lt;stdlib.h&gt;</span>
+<span class="keyword">#include</span> <span class="string">&lt;unistd.h&gt;</span>
+<span class="keyword">#include</span> <span class="string">&lt;sys/wait.h&gt;</span>
+<span class="keyword">#include</span> <span class="string">&lt;sys/types.h&gt;</span>
+
+<span class="type">int</span> <span class="function">main</span>(<span class="type">void</span>) {
+    <span class="type">pid_t</span> pid;
+
+    <span class="comment">// 创建子进程</span>
+    <span class="keyword">if</span> ((pid = <span class="function">fork</span>()) &lt; <span class="number">0</span>) {
+        <span class="function">perror</span>(<span class="string">"fork error"</span>);
+        <span class="function">exit</span>(<span class="number">1</span>);
+    }
+    <span class="keyword">else if</span> (pid == <span class="number">0</span>) {
+        <span class="comment">// --- 子进程代码区 ---</span>
+        <span class="function">printf</span>(<span class="string">"[子进程] 我的 PID 是 %d，我即将退出...\n"</span>, <span class="function">getpid</span>());
+        <span class="function">exit</span>(<span class="number">0</span>);  <span class="comment">// 子进程立即退出，进入"僵尸"状态</span>
+    }
+    <span class="keyword">else</span> {
+        <span class="comment">// --- 父进程代码区 ---</span>
+        <span class="function">printf</span>(<span class="string">"[父进程] 子进程 PID 是 %d\n"</span>, pid);
+        <span class="function">printf</span>(<span class="string">"--- 阶段 1: 子进程已退出，但父进程还没执行 wait() ---\n"</span>);
+        <span class="function">printf</span>(<span class="string">"请在另一个终端执行：ps aux | grep %d\n"</span>, pid);
+        <span class="function">printf</span>(<span class="string">"你会看到状态为 'Z' (Zombie/Defunct)。然后按 [Enter] 继续...\n"</span>);
+
+        <span class="keyword">while</span> (<span class="function">getchar</span>() != <span class="string">'\n'</span>);  <span class="comment">// 第一次暂停</span>
+
+        <span class="comment">// 回收子进程</span>
+        <span class="function">printf</span>(<span class="string">"[父进程] 正在执行 wait(NULL) 回收子进程...\n"</span>);
+        <span class="function">wait</span>(<span class="keyword">NULL</span>);
+
+        <span class="function">printf</span>(<span class="string">"--- 阶段 2: wait() 已执行 ---\n"</span>);
+        <span class="function">printf</span>(<span class="string">"再次执行：ps aux | grep %d\n"</span>, pid);
+        <span class="function">printf</span>(<span class="string">"你会发现子进程记录已经彻底消失。按 [Enter] 结束程序...\n"</span>);
+
+        <span class="keyword">while</span> (<span class="function">getchar</span>() != <span class="string">'\n'</span>);  <span class="comment">// 第二次暂停</span>
+    }
+
+    <span class="keyword">return</span> <span class="number">0</span>;
+}</code></pre>
+
+                <h2>三、实验步骤</h2>
+                <ol>
+                    <li><strong>编译程序</strong>：使用 <code>gcc -o process_demo process_demo.c</code> 编译代码</li>
+                    <li><strong>运行程序</strong>：执行 <code>./process_demo</code></li>
+                    <li><strong>观察僵尸进程</strong>：在另一个终端执行 <code>ps aux | grep 子进程 PID</code></li>
+                    <li><strong>回收进程</strong>：按回车键执行 <code>wait()</code>，再次观察进程状态</li>
+                </ol>
+
+                <div class="warning-box">
+                    <strong>注意</strong>：僵尸进程本身不消耗系统资源（内存、CPU），但如果大量僵尸进程积累，会占用进程 ID，导致系统无法创建新进程。
+                </div>
+
+                <h2>四、实验结果</h2>
+                <p>在第一个暂停点，执行 <code>ps aux</code> 可以看到类似以下的输出：</p>
+
+                <pre><code>zhaoxun   12345   0.0  0.0      0     0 pts/0    Z    10:30   0:00 [process_demo] &lt;defunct&gt;</code></pre>
+
+                <p>其中 <code>Z</code> 表示僵尸状态，<code>&lt;defunct&gt;</code> 也表示这是一个僵尸进程。</p>
+
+                <p>当父进程执行 <code>wait()</code> 后，再次查看进程列表，子进程的记录就完全消失了。</p>
+
+                <h2>五、如何避免僵尸进程？</h2>
+                <p>避免僵尸进程的方法主要有以下几种：</p>
+
+                <h3>1. 父进程调用 wait() 或 waitpid()</h3>
+                <p>这是最直接的方法。父进程在子进程退出后，及时调用 <code>wait()</code> 或 <code>waitpid()</code> 来回收子进程。</p>
+
+                <h3>2. 忽略 SIGCHLD 信号</h3>
+                <p>通过设置信号处理器忽略 <code>SIGCHLD</code> 信号，内核会自动回收子进程：</p>
+
+                <pre><code><span class="function">signal</span>(SIGCHLD, SIG_IGN);</code></pre>
+
+                <h3>3. 使用信号处理函数</h3>
+                <p>注册 <code>SIGCHLD</code> 信号的处理函数，在函数中调用 <code>waitpid()</code>：</p>
+
+                <pre><code><span class="type">void</span> <span class="function">sigchld_handler</span>(<span class="type">int</span> sig) {
+    <span class="function">waitpid</span>(-<span class="number">1</span>, <span class="keyword">NULL</span>, WNOHANG);
+}
+
+<span class="function">signal</span>(SIGCHLD, sigchld_handler);</code></pre>
+
+                <h2>六、总结</h2>
+                <p>通过这次实验，我深入理解了僵尸进程的产生机制和解决方法。关键点如下：</p>
+                <ul>
+                    <li>僵尸进程是子进程退出后，父进程未及时回收导致的</li>
+                    <li>僵尸进程处于 <code>Z</code> 状态，不占用资源但占用进程 ID</li>
+                    <li>使用 <code>wait()</code> 或 <code>waitpid()</code> 可以回收子进程</li>
+                    <li>良好的编程习惯是在父进程中正确处理子进程的退出</li>
+                </ul>
+
+                <p>进程管理是操作系统的核心功能之一，理解这些概念对后续学习进程调度、进程间通信等知识很有帮助。</p>
+            </div>
+        </article>
+    </div>
+
+    <!-- 页脚 -->
+    <footer>
+        <p>&copy; 2026 我的博客。All rights reserved.</p>
+    </footer>
+</body>
+</html>
